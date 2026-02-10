@@ -88,7 +88,42 @@
             Timestamp, serverTimestamp, onSnapshot, setDoc, getDoc
         } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-
+const dadosPerfil = [
+  {
+    "type": "user",
+    "url": "https://github.com/followtripbnu-hash",
+    "avatar_url": "https://avatars.githubusercontent.com/u/258726584?v=4",
+    "login": "followtripbnu-hash",
+    "name": "Follow Trip",
+    "bio": "🎟️ | INGRESSOS E EXCURSÃO\r\n📌 | Guiando você ao multiverso dos seus sonhos\r\n📍   | Blumenau SC - Consultar saída",
+    "company": "Follow Trip",
+    "website": "followtripbnu.com.br",
+    "location": "Blumenau",
+    "emails": [
+      {
+        "address": "followtripbnu@gmail.com",
+        "primary": true,
+        "verified": true
+      }
+    ],
+    "social_accounts": [
+      {
+        "provider": "generic",
+        "url": "https://chat.whatsapp.com/Ki8SEPBZDurJl1nMJ5S3KC"
+      },
+      {
+        "provider": "instagram",
+        "url": "https://www.instagram.com/followtripbnu/"
+      }
+    ],
+    "billing_plan": {
+      "name": "free",
+      "space": 976562499,
+      "private_repos": 10000
+    },
+    "created_at": "2026-02-02T04:05:26Z"
+  }
+];
         // =========================================================================
         // CONFIGURAÇÃO DO FIREBASE (PREENCHA PARA PUBLICAR)
         // =========================================================================
@@ -772,4 +807,5 @@
 
     </script>
 </body>
+
 </html>
