@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Título e SEO -->
+    <title>Follow Trip | Excursões Oficiais</title>
+    <meta name="description" content="Garanta seu lugar nos melhores festivais. Transporte seguro, conforto e a vibe certa. Reserve agora.">
+    <meta name="theme-color" content="#dc2626">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://followtrip.com.br/">
+    <meta property="og:title" content="Follow Trip - Excursões">
+    <meta property="og:description" content="Sua vaga para o festival começa aqui. Transporte executivo e galera animada.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Babel (Compilador React) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Estilos Globais */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0a0a0a;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(0,100%,20%,0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, hsla(240,100%,20%,0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            color: #f5f5f5;
+            overflow-x: hidden;
+        }
+        
+        /* Scrollbar Moderna */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+        
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Animações */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-enter { animation: fadeIn 0.6s ease-out forwards; }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-black text-neutral-100 min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0?dev';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?dev';
+        
+        import { 
+            Users, Bus, Calendar, FileText, CheckCircle, 
+            Upload, Download, Shield, LogIn, LogOut, 
+            AlertTriangle, MapPin, Search, Plus, FileSpreadsheet, Clock, ArrowRight, X, Briefcase, Mail, Settings, Lock, Trash2, DollarSign, Check, Instagram, Edit, RefreshCw, Star, Heart, Music, Phone
+        } from 'https://esm.sh/lucide-react@0.292.0?dev';
+
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { 
+            getFirestore, collection, addDoc, getDocs, 
+            query, where, doc, updateDoc, deleteDoc, 
+            Timestamp, serverTimestamp, onSnapshot, setDoc, getDoc
+        } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        // =========================================================================
+        // CONFIGURAÇÃO DO FIREBASE (PREENCHA PARA PUBLICAR)
+        // =========================================================================
+        
+        const productionConfig = {
+            apiKey: "COLE_SUA_API_KEY_AQUI",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO_ID",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : productionConfig;
+            
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'follow-trip-prod';
+
+        let app, auth, db;
+        try {
+            // Verifica se a config foi preenchida (não é mais o placeholder)
+            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+            } else {
+                console.warn("⚠️ Firebase não configurado. O app funcionará apenas visualmente (sem salvar dados).");
+            }
+        } catch (e) { console.error("Erro Firebase:", e); }
+
+        // =========================================================================
+        // UTILITÁRIOS
+        // =========================================================================
+
+        const masks = {
+            cpf: (v) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1'),
+            phone: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{4})\d+?$/, '$1'),
+            cnpj: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d)/, '$1-$2'),
+            date: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{4})\d+?$/, '$1'),
+            time: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1:$2').replace(/(\d{2})\d+?$/, '$1')
+        };
+
+        const exportToCSV = (passengers, eventName) => {
+            const headers = ["Nome", "RG", "Emissor", "CPF", "Telefone", "Cidade", "Pagamento", "Data Aceite"];
+            const rows = passengers.map(p => [
+                p.name, p.rg, p.issuer || "SSP", p.cpf, p.whatsapp, p.originCity, 
+                p.paymentStatus || 'Pendente', 
+                p.agreedAt ? new Date(p.agreedAt.seconds * 1000).toLocaleDateString() : 'N/A'
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(e => e.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.href = encodeURI(csvContent);
+            link.download = `LISTA_${eventName ? eventName.replace(/\s+/g, '_').toUpperCase() : 'GERAL'}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
+        // =========================================================================
+        // COMPONENTES UI
+        // =========================================================================
+
+        const InputDark = ({ label, mask, onChange, ...props }) => (
+            <div className="group w-full">
+                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2 block group-focus-within:text-red-600 transition-colors duration-300">{label}</label>
+                <input 
+                    className="w-full border border-neutral-800 bg-neutral-900/50 p-4 rounded-xl text-white placeholder-neutral-700 focus:ring-1 focus:ring-red-600 focus:border-red-600 outline-none transition-all duration-300 text-sm shadow-inner backdrop-blur-sm hover:border-neutral-700"
+                    onChange={(e) => {
+                        if (mask && masks[mask]) e.target.value = masks[mask](e.target.value);
+                        if (onChange) onChange(e);
+                    }}
+                    {...props} 
+                />
+            </div>
+        );
+
+        const AdminInput = ({ label, mask, onChange, ...props }) => (
+            <div className="group w-full">
+                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1 block group-focus-within:text-white transition-colors">{label}</label>
+                <input 
+                    className="w-full bg-neutral-900/80 border border-neutral-700/50 p-3 rounded-xl text-white placeholder-neutral-700 focus:border-red-600 focus:bg-black outline-none text-sm transition-all shadow-inner" 
+                    onChange={(e) => {
+                        if (mask && masks[mask]) e.target.value = masks[mask](e.target.value);
+                        if (onChange) onChange(e);
+                    }}
+                    {...props} 
+                />
+            </div>
+        );
+
+        const FeatureCard = ({ icon, title, desc }) => (
+            <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center hover:bg-white/5 transition duration-300 group cursor-default border-t border-white/10 hover:-translate-y-1">
+                <div className="bg-neutral-900/80 p-4 rounded-full mb-4 group-hover:scale-110 group-hover:bg-red-600/20 transition-all shadow-lg duration-300 border border-white/5">
+                    {icon}
+                </div>
+                <h3 className="font-black text-white text-lg uppercase tracking-tight mb-2">{title}</h3>
+                <p className="text-neutral-500 text-xs font-medium leading-relaxed max-w-[200px]">{desc}</p>
+            </div>
+        );
+
+        // =========================================================================
+        // APP PRINCIPAL
+        // =========================================================================
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [view, setView] = useState('home'); 
+            const [currentEvent, setCurrentEvent] = useState(null);
+            const [events, setEvents] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [message, setMessage] = useState(null);
+            const [adminPassword, setAdminPassword] = useState('admin123');
+            
+            const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+            const [driverAuthenticated, setDriverAuthenticated] = useState(false);
+
+            const notify = (text, type = 'info') => {
+                setMessage({ text, type });
+                setTimeout(() => setMessage(null), 5000);
+            };
+
+            // Auth
+            useEffect(() => {
+                if (!auth) { setLoading(false); return; }
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (err) { console.error("Auth Error:", err); }
+                };
+                initAuth();
+                return onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); });
+            }, []);
+
+            // Config & Events
+            useEffect(() => {
+                if (!user || !db) return;
+                const unsubConfig = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'admin'), (snap) => {
+                    if (snap.exists()) setAdminPassword(snap.data().password || 'admin123');
+                });
+                const unsubEvents = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'events')), (snap) => {
+                    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setEvents(list.sort((a,b) => (a.departureDate || '').localeCompare(b.departureDate || '')));
+                    setLoading(false);
+                });
+                return () => { unsubConfig(); unsubEvents(); };
+            }, [user]);
+
+            const handleAdminLogin = (pass) => {
+                if (pass === adminPassword) {
+                    setAdminAuthenticated(true);
+                    setView('admin');
+                    notify("Bem-vindo, Administrador.", "success");
+                } else notify("Senha incorreta.", "error");
+            };
+
+            const handleDriverLogin = (eventId, pass) => {
+                const ev = events.find(e => e.id === eventId);
+                if (ev && ev.driverPassword === pass) {
+                    setCurrentEvent(ev);
+                    setDriverAuthenticated(true);
+                    setView('driver');
+                    notify("Acesso autorizado.", "success");
+                } else notify("Credenciais inválidas.", "error");
+            };
+
+            return (
+                <div className="font-sans text-neutral-100 flex-grow flex flex-col min-h-screen">
+                    {/* Toast */}
+                    {message && (
+                        <div className={`fixed top-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border animate-enter backdrop-blur-md ${
+                            message.type === 'error' ? 'bg-red-900/80 border-red-500/50 text-white' : 
+                            message.type === 'success' ? 'bg-emerald-900/80 border-emerald-500/50 text-white' : 
+                            'bg-neutral-900/90 border-neutral-700 text-white'
+                        }`}>
+                            {message.type === 'error' ? <AlertTriangle size={20}/> : <CheckCircle size={20}/>}
+                            <span className="font-bold text-sm tracking-wide">{message.text}</span>
+                            <button onClick={() => setMessage(null)}><X size={16} className="opacity-50 hover:opacity-100"/></button>
+                        </div>
+                    )}
+
+                    {/* Navbar */}
+                    <header className="bg-black/60 backdrop-blur-md border-b border-white/5 py-4 sticky top-0 z-50">
+                        <div className="max-w-6xl mx-auto px-4 md:px-8 flex justify-between items-center">
+                            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setView('home'); setAdminAuthenticated(false); setDriverAuthenticated(false); }}>
+                                <div className="bg-red-600 p-2 rounded-full shadow-[0_0_20px_rgba(220,38,38,0.5)] group-hover:scale-110 transition-transform duration-300">
+                                    <Bus className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="flex items-baseline gap-1 select-none">
+                                    <h1 className="font-black text-xl tracking-tighter text-white uppercase">FOLLOW</h1>
+                                    <span className="font-black text-xl tracking-tighter text-red-600 uppercase">TRIP</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-4 md:gap-6 text-[10px] font-black uppercase tracking-widest items-center">
+                                {!adminAuthenticated && !driverAuthenticated && (
+                                    <>
+                                        <button onClick={() => setView('login-driver')} className="text-neutral-500 hover:text-white transition flex items-center gap-2 group">
+                                            <span className="hidden sm:inline">Motorista</span> <Briefcase size={14} className="group-hover:text-red-500 transition-colors"/>
+                                        </button>
+                                        <div className="w-px h-3 bg-neutral-800"></div>
+                                        <button onClick={() => setView('login-admin')} className="text-neutral-500 hover:text-white transition group flex items-center gap-2">
+                                            <span>Admin</span> <Lock size={14} className="group-hover:text-red-500 transition-colors"/>
+                                        </button>
+                                    </>
+                                )}
+                                {(adminAuthenticated || driverAuthenticated) && (
+                                    <button onClick={() => { setAdminAuthenticated(false); setDriverAuthenticated(false); setView('home'); }} className="text-red-500 hover:text-white flex items-center gap-2 transition bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20 hover:bg-red-500">
+                                        SAIR <LogOut size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-6xl mx-auto p-4 md:p-8 flex-grow w-full relative z-0">
+                        {loading && (
+                            <div className="flex flex-col items-center justify-center py-40 gap-6 animate-pulse">
+                                <div className="w-16 h-16 border-4 border-neutral-800 border-t-red-600 rounded-full animate-spin"></div>
+                                <div className="text-neutral-500 font-black uppercase tracking-[0.3em] text-xs">Carregando...</div>
+                            </div>
+                        )}
+
+                        {!loading && view === 'home' && <PublicEventsList events={events} onBook={(e) => { setCurrentEvent(e); setView('booking'); }} />}
+                        {!loading && view === 'login-admin' && <LoginScreen title="ACESSO ADMIN" hint="Gestão da plataforma." onLogin={handleAdminLogin} icon={<Shield className="h-10 w-10 text-red-600 mb-4" />} />}
+                        {!loading && view === 'login-driver' && <DriverLoginScreen events={events} onLogin={handleDriverLogin} />}
+                        {!loading && view === 'admin' && adminAuthenticated && <AdminDashboard events={events} appId={appId} db={db} user={user} notify={notify} currentPassword={adminPassword} />}
+                        {!loading && view === 'driver' && driverAuthenticated && currentEvent && <DriverFlow event={currentEvent} appId={appId} db={db} user={user} notify={notify} />}
+                        {!loading && view === 'booking' && currentEvent && <BookingWizard event={currentEvent} appId={appId} db={db} user={user} onBack={() => setView('home')} notify={notify} />}
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="border-t border-white/5 bg-black/60 backdrop-blur-xl py-10 mt-auto">
+                        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="text-center md:text-left">
+                                <p className="text-neutral-600 text-[10px] font-black uppercase tracking-[3px]">© 2024 Follow Trip • Santa Catarina</p>
+                                <p className="text-neutral-700 text-[9px] mt-1">Todos os direitos reservados.</p>
+                            </div>
+                            <div className="flex gap-6">
+                                <a href="https://instagram.com/followtripbnu" target="_blank" className="text-neutral-500 hover:text-pink-500 transition hover:scale-110"><Instagram size={20}/></a>
+                                <a href="https://wa.me/5547984474202" target="_blank" className="text-neutral-500 hover:text-green-500 transition hover:scale-110"><Phone size={20}/></a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // =========================================================================
+        // SUB-TELAS E COMPONENTES
+        // =========================================================================
+
+        function LoginScreen({ title, onLogin, icon, hint }) {
+            const [pass, setPass] = useState('');
+            return (
+                <div className="max-w-md mx-auto mt-20 glass-panel p-10 rounded-3xl shadow-2xl animate-enter">
+                    <div className="flex flex-col items-center justify-center text-center">
+                        {icon}
+                        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">{title}</h2>
+                        <p className="text-neutral-500 text-xs mb-8 uppercase tracking-wider font-bold">{hint}</p>
+                    </div>
+                    <input type="password" placeholder="Senha" className="w-full p-4 bg-black/40 border border-neutral-700 rounded-xl mb-4 text-white text-center tracking-[0.5em] focus:border-red-600 outline-none transition-all placeholder:tracking-normal" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && onLogin(pass)} />
+                    <button onClick={() => onLogin(pass)} className="w-full bg-white text-black py-4 rounded-xl font-black hover:bg-neutral-200 transition uppercase tracking-widest text-xs shadow-lg transform active:scale-[0.98]">Acessar</button>
+                </div>
+            );
+        }
+
+        function DriverLoginScreen({ events, onLogin }) {
+            const [selectedId, setSelectedId] = useState('');
+            const [pass, setPass] = useState('');
+            return (
+                <div className="max-w-md mx-auto mt-20 glass-panel p-10 rounded-3xl shadow-2xl animate-enter relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
+                    <div className="text-center mb-8">
+                        <Briefcase className="h-8 w-8 text-white mx-auto mb-4" />
+                        <h2 className="text-2xl font-black text-white uppercase">Área do Motorista</h2>
+                        <p className="text-neutral-500 text-[10px] uppercase font-bold tracking-widest mt-2">Acesso aos Contratos e Listas</p>
+                    </div>
+                    <div className="space-y-4">
+                        <select className="w-full p-4 bg-black/40 border border-neutral-700 rounded-xl text-neutral-300 outline-none focus:border-red-600 appearance-none cursor-pointer" value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+                            <option value="">Selecione a Viagem...</option>
+                            {events.map(e => <option key={e.id} value={e.id}>{masks.date(e.departureDate)} - {e.title}</option>)}
+                        </select>
+                        <input type="password" placeholder="Senha da Viagem" className="w-full p-4 bg-black/40 border border-neutral-700 rounded-xl text-white text-center tracking-[0.5em] focus:border-red-600 outline-none transition-all placeholder:tracking-normal" value={pass} onChange={e => setPass(e.target.value)} />
+                        <button onClick={() => onLogin(selectedId, pass)} disabled={!selectedId} className="w-full bg-red-600 text-white py-4 rounded-xl font-black hover:bg-red-700 transition uppercase tracking-widest text-xs shadow-lg shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed">Entrar</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function PublicEventsList({ events, onBook }) {
+            return (
+                <div className="animate-enter">
+                    <div className="text-center mb-20 py-20 glass-panel rounded-[3rem] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+                        <div className="relative z-10 px-6">
+                            <span className="inline-block py-1.5 px-4 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-8 backdrop-blur-md">Próximas Saídas</span>
+                            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6 uppercase leading-none">
+                                VIVA O <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">MOMENTO</span>
+                            </h2>
+                            <p className="text-neutral-400 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
+                                Transporte oficial para os maiores festivais. Segurança, conforto e aquela resenha que só a gente tem.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+                        <FeatureCard icon={<Shield className="text-red-500 h-6 w-6"/>} title="100% Seguro" desc="Transportadoras legalizadas e motoristas profissionais." />
+                        <FeatureCard icon={<Star className="text-yellow-500 h-6 w-6"/>} title="Conforto Total" desc="Ônibus executivos e semi-leito com ar e poltronas reclináveis." />
+                        <FeatureCard icon={<Music className="text-purple-500 h-6 w-6"/>} title="Vibe Garantida" desc="A festa começa no embarque. Conheça sua galera." />
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {events.map(event => (
+                            <div key={event.id} className="group bg-neutral-900 rounded-[2rem] overflow-hidden hover:-translate-y-2 transition-all duration-500 border border-white/5 hover:border-white/10 shadow-2xl flex flex-col">
+                                <div className="h-64 relative overflow-hidden shrink-0">
+                                    {event.imageUrl ? (
+                                        <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100" />
+                                    ) : (
+                                        <div className="w-full h-full bg-neutral-800 flex items-center justify-center"><Bus className="text-neutral-700 h-12 w-12"/></div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/20 to-transparent"></div>
+                                    <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">Confirmado</div>
+                                    <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2 text-white font-black uppercase tracking-tight text-lg drop-shadow-lg">
+                                        <MapPin className="h-4 w-4 text-red-500" /> <span className="truncate">{event.eventCity}</span>
+                                    </div>
+                                </div>
+                                <div className="p-8 flex flex-col flex-grow">
+                                    <h3 className="font-black text-2xl text-white leading-tight uppercase tracking-tight mb-6 line-clamp-2 min-h-[4rem]">{event.title}</h3>
+                                    <div className="space-y-4 mb-8">
+                                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                            <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest">Saída</span>
+                                            <span className="text-white font-bold text-sm">{masks.date(event.departureDate)} • {event.departureTime}h</span>
+                                        </div>
+                                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                            <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest">Retorno</span>
+                                            <span className="text-white font-bold text-sm">{masks.date(event.returnDate)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-auto flex items-center justify-between gap-4">
+                                        <div>
+                                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1">Valor Pessoa</p>
+                                            <p className="text-2xl font-black text-white">{formatCurrency(event.price)}</p>
+                                        </div>
+                                        <button onClick={() => onBook(event)} className="bg-white text-black h-12 px-8 rounded-xl font-black uppercase tracking-wider text-xs hover:bg-neutral-200 transition flex items-center gap-2 group-hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] active:scale-[0.98]">
+                                            Reservar <ArrowRight size={16}/>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {events.length === 0 && (
+                        <div className="text-center py-20 text-neutral-500 font-bold uppercase tracking-widest opacity-50 bg-neutral-900/20 rounded-3xl border border-dashed border-neutral-800">
+                            Nenhuma viagem disponível no momento.
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // --- FLUXO DE RESERVA (COM CONTRATO JURÍDICO) ---
+
+        function BookingWizard({ event, appId, db, user, onBack, notify }) {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({ name: '', cpf: '', rg: '', issuer: '', whatsapp: '', originCity: '' });
+            const [loading, setLoading] = useState(false);
+            
+            const checkDup = async (cpf) => {
+                if (!user) return true;
+                const snap = await getDocs(query(collection(db, 'artifacts', appId, 'public', 'data', 'passengers'), where('eventId', '==', event.id), where('cpf', '==', cpf)));
+                return !snap.empty;
+            };
+
+            const handleNext = async () => {
+                if (!formData.name || !formData.cpf || !formData.rg || !formData.whatsapp || !formData.originCity) return notify("Preencha todos os campos.", "error");
+                setLoading(true);
+                const isDup = await checkDup(formData.cpf);
+                setLoading(false);
+                if (isDup) return notify("CPF já cadastrado nesta trip.", "error");
+                setStep(2);
+            };
+
+            const handleConfirm = async () => {
+                if (!user) return notify("Erro de conexão.", "error");
+                setLoading(true);
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'passengers'), {
+                        ...formData, eventId: event.id, eventName: event.title, status: 'pendente', paymentStatus: 'pendente',
+                        agreedToTerms: true, agreedAt: serverTimestamp(), createdAt: serverTimestamp(), userId: user.uid
+                    });
+                    setStep(3);
+                    notify("Reserva Recebida!", "success");
+                } catch (e) { notify("Erro ao salvar.", "error"); }
+                setLoading(false);
+            };
+
+            // CONTRATO PASSAGEIRO
+            const contractTxt = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE TRANSPORTE TURÍSTICO\n\nCONTRATADA: FOLLOW TRIP, representada por Izaias Galom dos Santos Junior.\n\nCONTRATANTE: ${formData.name.toUpperCase()}, portador do CPF ${formData.cpf}, RG ${formData.rg} (${formData.issuer || 'SSP'}).\n\nOBJETO: Transporte rodoviário fretado ida e volta para o evento ${event.title.toUpperCase()} em ${event.eventCity.toUpperCase()}.\n\nSAÍDA: ${masks.date(event.departureDate)} às ${event.departureTime}.\n\nCLÁUSULAS GERAIS:\n1. O PASSAGEIRO deve portar documento original com foto no embarque.\n2. É terminantemente proibido o porte e uso de substâncias ilícitas no interior do veículo.\n3. O não comparecimento no horário de embarque (tolerância de 10 minutos) será considerado desistência, sem direito a reembolso.\n4. CANCELAMENTOS: Até 7 dias antes da viagem, reembolso de 80% do valor pago. Após este prazo, não haverá reembolso, sendo permitida apenas a troca de passageiro mediante aviso prévio de 48h.\n5. O passageiro é responsável por seus pertences pessoais.\n\nAo aceitar estes termos digitalmente, o CONTRATANTE declara estar ciente e de acordo com todas as cláusulas acima.`;
+
+            const handleDownloadContract = () => {
+                const blob = new Blob([contractTxt], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `CONTRATO_FOLLOWTRIP_${formData.name.split(' ')[0].toUpperCase()}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            return (
+                <div ref={(el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="max-w-2xl mx-auto glass-panel rounded-3xl shadow-2xl overflow-hidden mt-10 animate-enter">
+                    <div className="bg-black/40 p-6 flex justify-between items-center border-b border-white/5">
+                        <h2 className="font-black text-white uppercase text-lg tracking-tight"><span className="text-red-500">RESERVA:</span> {event.title}</h2>
+                        <button onClick={onBack} className="text-[10px] font-black uppercase tracking-widest text-neutral-500 hover:text-white transition bg-neutral-800/50 px-3 py-1.5 rounded-full">Cancelar</button>
+                    </div>
+                    <div className="p-8 md:p-12">
+                        <div className="flex mb-10 border-b border-white/5 pb-1">
+                            {[1,2,3].map(i => (
+                                <div key={i} className={`flex-1 text-center pb-3 text-[10px] font-black uppercase tracking-widest transition-all ${step >= i ? 'text-red-500 border-b-2 border-red-500' : 'text-neutral-700'}`}>Passo {i}</div>
+                            ))}
+                        </div>
+
+                        {step === 1 && (
+                            <div className="space-y-6 animate-enter">
+                                <h3 className="text-2xl font-black text-white uppercase italic">Seus Dados</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <InputDark label="Nome Completo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                    <InputDark label="CPF" mask="cpf" value={formData.cpf} onChange={e => setFormData({...formData, cpf: e.target.value})} />
+                                    <InputDark label="RG" value={formData.rg} onChange={e => setFormData({...formData, rg: e.target.value})} />
+                                    <InputDark label="Órgão Emissor" value={formData.issuer} onChange={e => setFormData({...formData, issuer: e.target.value})} />
+                                    <InputDark label="WhatsApp" mask="phone" value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
+                                    <InputDark label="Cidade Embarque" value={formData.originCity} onChange={e => setFormData({...formData, originCity: e.target.value})} />
+                                </div>
+                                <button onClick={handleNext} disabled={loading} className="w-full bg-red-600 text-white py-5 rounded-xl font-black uppercase tracking-widest mt-6 hover:bg-red-700 transition shadow-lg shadow-red-900/20">{loading ? 'Verificando...' : 'Ler Contrato'}</button>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div className="space-y-6 animate-enter">
+                                <h3 className="text-2xl font-black text-white uppercase italic">Contrato Digital</h3>
+                                <div className="bg-neutral-100 text-neutral-900 p-6 rounded-xl h-64 overflow-y-auto text-xs font-mono leading-relaxed border-4 border-neutral-800"><pre className="whitespace-pre-wrap">{contractTxt}</pre></div>
+                                <label className="flex items-center gap-4 p-4 border border-neutral-700 rounded-xl cursor-pointer hover:bg-white/5 transition select-none">
+                                    <input type="checkbox" id="terms" className="accent-red-600 w-5 h-5" />
+                                    <span className="text-sm font-medium text-neutral-300">Li e concordo com os termos de serviço.</span>
+                                </label>
+                                <button onClick={() => document.getElementById('terms').checked ? handleConfirm() : notify("Aceite os termos.", "error")} disabled={loading} className="w-full bg-emerald-600 text-white py-5 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg shadow-emerald-900/20">{loading ? 'Processando...' : 'Assinar e Reservar'}</button>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="text-center py-10 animate-enter">
+                                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(16,185,129,0.4)]"><Check size={40} className="text-black" strokeWidth={3}/></div>
+                                <h2 className="text-3xl font-black text-white uppercase italic mb-4">Reserva Confirmada!</h2>
+                                <p className="text-neutral-400 mb-8 max-w-sm mx-auto font-medium">Sua pré-reserva foi feita. Para garantir seu lugar, realize o pagamento via PIX agora mesmo.</p>
+                                
+                                <div className="space-y-3 max-w-xs mx-auto">
+                                    <a href="https://wa.me/5547984474202" target="_blank" className="w-full flex items-center justify-center gap-3 bg-[#25D366] text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-[#20bd5a] transition shadow-lg hover:-translate-y-1">
+                                        Pagar no WhatsApp <ArrowRight size={18}/>
+                                    </a>
+                                    <button onClick={handleDownloadContract} className="w-full flex items-center justify-center gap-2 text-neutral-500 hover:text-white py-2 text-[10px] font-black uppercase tracking-widest transition">
+                                        <Download size={14}/> Baixar meu Contrato
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- DASHBOARD ADMIN ---
+
+        function AdminDashboard({ events, appId, db, user, notify, currentPassword }) {
+            const [tab, setTab] = useState('events'); 
+            const [newEvent, setNewEvent] = useState({ title: '', departureDate: '', departureTime: '', returnDate: '', returnTime: '', price: '', eventCity: '', attendedCities: '', driverPassword: '', imageUrl: '' });
+            const [passengers, setPassengers] = useState([]);
+            const [selectedId, setSelectedId] = useState(null);
+
+            useEffect(() => {
+                if (!selectedId) return;
+                return onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'passengers'), where('eventId', '==', selectedId)), (snap) => {
+                    setPassengers(snap.docs.map(d => ({id: d.id, ...d.data()})));
+                });
+            }, [selectedId]);
+
+            const handleSave = async () => {
+                if(!newEvent.title) return notify("Título obrigatório", "error");
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'events'), {...newEvent, createdAt: serverTimestamp()});
+                    notify("Trip Criada!", "success");
+                    setNewEvent({ title: '', departureDate: '', departureTime: '', returnDate: '', returnTime: '', price: '', eventCity: '', attendedCities: '', driverPassword: '', imageUrl: '' });
+                    setTab('events');
+                } catch(e) { notify("Erro.", "error"); }
+            };
+
+            const handleDelete = async (id) => {
+                if(confirm("Excluir viagem e perder dados?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', id));
+            };
+
+            const handleTogglePay = async (pid, status) => {
+                const newS = status === 'pago' ? 'pendente' : 'pago';
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'passengers', pid), { paymentStatus: newS });
+            };
+
+            const handleDeletePassenger = async (pid) => {
+                if(confirm("Remover passageiro?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'passengers', pid));
+            }
+
+            return (
+                <div className="grid md:grid-cols-4 gap-8">
+                    <div className="glass-panel p-6 rounded-3xl h-fit">
+                        <h3 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Menu</h3>
+                        <nav className="space-y-2">
+                            <button onClick={() => {setTab('events'); setSelectedId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='events' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Gerenciar Trips</button>
+                            <button onClick={() => {setTab('create'); setSelectedId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='create' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Criar Nova Trip</button>
+                        </nav>
+                    </div>
+                    <div className="md:col-span-3 glass-panel p-8 rounded-3xl min-h-[500px]">
+                        {tab === 'create' && (
+                            <div className="space-y-6 animate-enter">
+                                <h2 className="text-2xl font-black text-white uppercase italic mb-6">Cadastrar Nova Trip</h2>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2"><AdminInput label="Nome do Evento" value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})}/></div>
+                                    <AdminInput label="Cidade Destino" value={newEvent.eventCity} onChange={e => setNewEvent({...newEvent, eventCity: e.target.value})}/>
+                                    <AdminInput label="Preço (R$)" type="number" value={newEvent.price} onChange={e => setNewEvent({...newEvent, price: e.target.value})}/>
+                                    <AdminInput label="Data Ida" type="date" value={newEvent.departureDate} onChange={e => setNewEvent({...newEvent, departureDate: e.target.value})}/>
+                                    <AdminInput label="Hora Ida" type="time" value={newEvent.departureTime} onChange={e => setNewEvent({...newEvent, departureTime: e.target.value})}/>
+                                    <AdminInput label="Data Volta" type="date" value={newEvent.returnDate} onChange={e => setNewEvent({...newEvent, returnDate: e.target.value})}/>
+                                    <div className="md:col-span-2 bg-red-900/10 p-4 rounded-xl border border-red-500/20">
+                                        <AdminInput label="Senha para Motorista" value={newEvent.driverPassword} onChange={e => setNewEvent({...newEvent, driverPassword: e.target.value})}/>
+                                    </div>
+                                    <div className="md:col-span-2"><AdminInput label="URL da Imagem (Capa)" placeholder="https://..." value={newEvent.imageUrl} onChange={e => setNewEvent({...newEvent, imageUrl: e.target.value})}/></div>
+                                </div>
+                                <button onClick={handleSave} className="bg-white text-black px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 mt-4 w-full md:w-auto">Publicar Viagem</button>
+                            </div>
+                        )}
+
+                        {tab === 'events' && !selectedId && (
+                            <div className="space-y-4 animate-enter">
+                                <h2 className="text-2xl font-black text-white uppercase italic mb-6">Viagens Ativas</h2>
+                                {events.map(e => (
+                                    <div key={e.id} className="bg-neutral-900/50 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center border border-white/5 hover:border-white/10 gap-4">
+                                        <div className="flex items-center gap-4">
+                                            {e.imageUrl && <img src={e.imageUrl} className="w-16 h-16 rounded-lg object-cover bg-neutral-800"/>}
+                                            <div>
+                                                <h3 className="font-black text-white uppercase text-lg">{e.title}</h3>
+                                                <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2"><Calendar size={12}/> {masks.date(e.departureDate)} • {e.eventCity}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 w-full md:w-auto">
+                                            <button onClick={() => setSelectedId(e.id)} className="flex-1 md:flex-none bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 shadow-lg">Ver Lista</button>
+                                            <button onClick={() => handleDelete(e.id)} className="bg-neutral-800 text-neutral-400 px-4 py-3 rounded-xl hover:text-red-500 hover:bg-red-500/10 transition"><Trash2 size={18}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {events.length === 0 && <p className="text-neutral-500 italic">Nenhuma viagem cadastrada.</p>}
+                            </div>
+                        )}
+
+                        {selectedId && (
+                            <div className="animate-enter">
+                                <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
+                                    <button onClick={() => setSelectedId(null)} className="text-neutral-500 hover:text-white font-bold uppercase text-[10px] tracking-widest flex items-center gap-2"><ArrowRight className="rotate-180" size={14}/> Voltar</button>
+                                    <button onClick={() => exportToCSV(passengers)} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 shadow-lg flex items-center gap-2"><FileSpreadsheet size={14}/> Baixar Excel</button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div className="bg-neutral-900 p-4 rounded-xl text-center border border-white/5"><span className="block text-2xl font-black text-white">{passengers.length}</span><span className="text-[9px] uppercase font-bold text-neutral-500">Passageiros</span></div>
+                                    <div className="bg-neutral-900 p-4 rounded-xl text-center border border-white/5"><span className="block text-2xl font-black text-emerald-500">{passengers.filter(p => p.paymentStatus === 'pago').length}</span><span className="text-[9px] uppercase font-bold text-neutral-500">Pagos</span></div>
+                                </div>
+                                <div className="overflow-x-auto rounded-xl border border-white/5">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="text-neutral-500 uppercase text-[10px] tracking-widest bg-neutral-900"><tr><th className="p-4">Nome / CPF</th><th className="p-4">Status</th><th className="p-4 text-right">Ação</th></tr></thead>
+                                        <tbody className="divide-y divide-white/5 bg-neutral-900/30">
+                                            {passengers.map(p => (
+                                                <tr key={p.id} className="hover:bg-white/5 transition">
+                                                    <td className="p-4">
+                                                        <div className="font-bold text-white uppercase text-xs">{p.name}</div>
+                                                        <div className="text-neutral-500 font-mono text-[10px]">{p.cpf}</div>
+                                                    </td>
+                                                    <td className="p-4"><button onClick={() => handleTogglePay(p.id, p.paymentStatus)} className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border ${p.paymentStatus === 'pago' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>{p.paymentStatus || 'Pendente'}</button></td>
+                                                    <td className="p-4 text-right"><button onClick={() => handleDeletePassenger(p.id)} className="text-neutral-600 hover:text-red-500 p-2"><Trash2 size={16}/></button></td>
+                                                </tr>
+                                            ))}
+                                            {passengers.length === 0 && <tr><td colSpan="3" className="p-8 text-center text-neutral-500 text-xs uppercase font-bold">Lista Vazia</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- PAINEL E FLUXO DO MOTORISTA (COM CONTRATO) ---
+
+        function DriverFlow({ event, appId, db, user, notify }) {
+            const [step, setStep] = useState('form');
+            const [contractData, setContractData] = useState({ company: '', drivers: '', plate: '', cnpj: '' });
+            const [list, setList] = useState([]);
+
+            // Carrega passageiros
+            useEffect(() => onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'passengers'), where('eventId', '==', event.id)), s => setList(s.docs.map(d=>d.data()))), [event]);
+
+            // CONTRATO DA TRANSPORTADORA
+            const driverContractTxt = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE TRANSPORTE FRETADO\n\nCONTRATANTE: FOLLOW TRIP.\nCONTRATADA: ${contractData.company.toUpperCase()} (${contractData.cnpj}).\n\nOBJETO: Transporte fretado para ${event.title.toUpperCase()}.\nMOTORISTAS RESPONSÁVEIS: ${contractData.drivers}.\nVEÍCULO PLACA: ${contractData.plate}.\n\nCLÁUSULAS:\n1. A CONTRATADA compromete-se a realizar o transporte com veículo em perfeitas condições de segurança e higiene.\n2. O motorista deve conferir a lista de passageiros e exigir documento original com foto.\n3. A FOLLOW TRIP não se responsabiliza por multas de trânsito ou problemas mecânicos do veículo contratado.\n\nAssinado digitalmente por ${contractData.company}.`;
+
+            const handleDownloadDriverContract = () => {
+                const blob = new Blob([driverContractTxt], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `CONTRATO_TRANSPORTADORA_${contractData.company.replace(/\s+/g, '_').toUpperCase()}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            if (step === 'dashboard') {
+                return (
+                    <div className="glass-panel p-10 rounded-[2rem] animate-enter">
+                        <div className="flex justify-between items-start mb-8 border-b border-white/5 pb-6">
+                            <div>
+                                <h2 className="text-3xl font-black text-white uppercase italic">Painel de Bordo</h2>
+                                <p className="text-neutral-500 font-bold uppercase tracking-widest text-xs mt-1">{event.title} • {masks.date(event.departureDate)}</p>
+                            </div>
+                            <div className="bg-white text-black px-4 py-2 rounded-lg font-black text-xl">{list.length} Pax</div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div className="bg-neutral-900/50 p-8 rounded-3xl border border-white/5 text-center flex flex-col justify-center items-center">
+                                <FileText className="text-red-600 mb-4" size={48}/>
+                                <h3 className="text-xl font-black text-white uppercase mb-2">Lista de Passageiros</h3>
+                                <p className="text-neutral-500 text-xs mb-6 max-w-xs">Lista completa com RG e Órgão Emissor para conferência no embarque e fiscalização.</p>
+                                <button onClick={() => exportToCSV(list, event.title)} className="bg-white text-black px-8 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 w-full max-w-xs mb-4">Baixar Lista (ANTT)</button>
+                                <button onClick={handleDownloadDriverContract} className="text-neutral-400 hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"><Download size={12}/> Baixar Contrato</button>
+                            </div>
+                            <div className="bg-neutral-900/50 p-8 rounded-3xl border border-white/5 flex flex-col justify-center">
+                                <h3 className="text-sm font-black text-neutral-400 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Dados da Viagem</h3>
+                                <div className="space-y-4">
+                                    <div><span className="text-[10px] text-red-500 uppercase font-black">Empresa</span><div className="text-white font-bold">{contractData.company}</div></div>
+                                    <div><span className="text-[10px] text-red-500 uppercase font-black">Motoristas</span><div className="text-white font-bold">{contractData.drivers}</div></div>
+                                    <div><span className="text-[10px] text-red-500 uppercase font-black">Placa</span><div className="text-white font-bold">{contractData.plate}</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-2xl mx-auto glass-panel p-10 rounded-3xl animate-enter">
+                    <h2 className="text-2xl font-black text-white uppercase italic mb-6">Contrato de Prestação de Serviço</h2>
+                    <p className="text-neutral-400 text-xs mb-8">Preencha os dados da transportadora para liberar o painel e gerar o contrato.</p>
+                    <div className="space-y-4">
+                        <AdminInput label="Razão Social" value={contractData.company} onChange={e => setContractData({...contractData, company: e.target.value})} />
+                        <AdminInput label="CNPJ" mask="cnpj" value={contractData.cnpj} onChange={e => setContractData({...contractData, cnpj: e.target.value})} />
+                        <AdminInput label="Nome dos Motoristas" value={contractData.drivers} onChange={e => setContractData({...contractData, drivers: e.target.value})} />
+                        <AdminInput label="Placa do Veículo" value={contractData.plate} onChange={e => setContractData({...contractData, plate: e.target.value})} />
+                        <button onClick={() => {
+                            if(!contractData.company || !contractData.cnpj) return notify("Preencha todos os dados.", "error");
+                            notify("Contrato Gerado.", "success");
+                            setStep('dashboard');
+                        }} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 mt-4 shadow-lg">Gerar Contrato e Acessar</button>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
