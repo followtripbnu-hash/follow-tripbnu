@@ -90,17 +90,17 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 
         // =========================================================================
-        // CONFIGURAÇÃO DO FIREBASE (PREENCHA PARA PUBLICAR)
+        // CONFIGURAÇÃO DO FIREBASE
         // =========================================================================
         
         const productionConfig = {
             apiKey: "AIzaSyC39OUcP5pMKUUzkkaWvQEHhaQl-AH84pc",
-  authDomain: "followsite-5e0ba.firebaseapp.com",
-  projectId: "followsite-5e0ba",
-  storageBucket: "followsite-5e0ba.firebasestorage.app",
-  messagingSenderId: "171432925082",
-  appId: "1:171432925082:web:1ccb4a01b9851c5afd8c23",
-  measurementId: "G-K0VPC2XLMS"
+            authDomain: "followsite-5e0ba.firebaseapp.com",
+            projectId: "followsite-5e0ba",
+            storageBucket: "followsite-5e0ba.firebasestorage.app",
+            messagingSenderId: "171432925082",
+            appId: "1:171432925082:web:1ccb4a01b9851c5afd8c23",
+            measurementId: "G-K0VPC2XLMS"
         };
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
@@ -111,7 +111,6 @@
 
         let app, auth, db;
         try {
-            // Verifica se a config foi preenchida (não é mais o placeholder)
             if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -459,7 +458,7 @@
             );
         }
 
-        // --- FLUXO DE RESERVA (COM CONTRATO JURÍDICO) ---
+        // --- FLUXO DE RESERVA (COM CONTRATO JURÍDICO COMPLETO) ---
 
         function BookingWizard({ event, appId, db, user, onBack, notify }) {
             const [step, setStep] = useState(1);
@@ -495,8 +494,79 @@
                 setLoading(false);
             };
 
-            // CONTRATO PASSAGEIRO
-            const contractTxt = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE TRANSPORTE TURÍSTICO\n\nCONTRATADA: FOLLOW TRIP, representada por Izaias Galom dos Santos Junior.\n\nCONTRATANTE: ${formData.name.toUpperCase()}, portador do CPF ${formData.cpf}, RG ${formData.rg} (${formData.issuer || 'SSP'}).\n\nOBJETO: Transporte rodoviário fretado ida e volta para o evento ${event.title.toUpperCase()} em ${event.eventCity.toUpperCase()}.\n\nSAÍDA: ${masks.date(event.departureDate)} às ${event.departureTime}.\n\nCLÁUSULAS GERAIS:\n1. O PASSAGEIRO deve portar documento original com foto no embarque.\n2. É terminantemente proibido o porte e uso de substâncias ilícitas no interior do veículo.\n3. O não comparecimento no horário de embarque (tolerância de 10 minutos) será considerado desistência, sem direito a reembolso.\n4. CANCELAMENTOS: Até 7 dias antes da viagem, reembolso de 80% do valor pago. Após este prazo, não haverá reembolso, sendo permitida apenas a troca de passageiro mediante aviso prévio de 48h.\n5. O passageiro é responsável por seus pertences pessoais.\n\nAo aceitar estes termos digitalmente, o CONTRATANTE declara estar ciente e de acordo com todas as cláusulas acima.`;
+            // --- CONTRATO COMPLETO DO PASSAGEIRO ---
+            const contractTxt = `
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS POR CONTRATANTE (PASSAGEIRO):
+
+EXCURSÕES PARA FESTIVAIS E EVENTOS MUSICAIS
+
+1. IDENTIFICAÇÃO DAS PARTES
+CONTRATADA:
+FOLLOW TRIP – IZAIAS GALOM DOS SANTOS JR, inscrito no CPF sob o nº 096.668.669-19, portador do RG nº 6.672.007 SSP/SC, residente e domiciliado na Rua Tusnelda Bachmann, nº 373, bairro Velha Central, cidade de Blumenau – SC, CEP 89040-320.
+
+PASSAGEIRO (CONTRATANTE):
+EU ${formData.name.toUpperCase()}, portador do CPF: ${formData.cpf} e do RG: ${formData.rg} ${formData.issuer ? `(${formData.issuer})` : ''}
+Telefone: ${formData.whatsapp}
+Cidade de embarque: ${formData.originCity}.
+
+2. DO OBJETO
+2.1. O presente contrato tem como objeto a prestação de serviço de transporte FRETADO/INDIVIDUAL para participação em festival/evento musical, organizado por terceiros, com saída da(s) cidade(s) previamente informada(s) pela CONTRATANTE e destino ao local do evento pela contratada.
+
+Parágrafo único: O(a) CONTRATADA não é responsável pela organização, produção ou realização do evento, limitando-se exclusivamente ao serviço de transporte fretado.
+
+3. DO ITINERÁRIO, CRONOGRAMA E LOGÍSTICA
+3.1. As informações de saída, retorno, pontos de embarque e horários serão previamente informadas ao PASSAGEIRO por meio de grupos oficiais da excursão (WhatsApp ou outro canal oficial).
+
+Data de saída: ${masks.date(event.departureDate)}
+Horário previsto: ${event.departureTime}h
+Local(is) de embarque: Verificar nos grupos oficiais
+Data de retorno: ${masks.date(event.returnDate)} (após o encerramento do evento)
+
+3.2. O retorno ocorrerá após o encerramento oficial do evento, respeitando tolerância máxima definida neste contrato.
+
+4. DA TOLERÂNCIA E RESPONSABILIDADE DO PASSAGEIRO
+4.1. Para o embarque inicial, haverá tolerância máxima de 10 (dez) minutos após o horário informado. Após esse período, o veículo seguirá viagem sem direito a reembolso.
+
+4.2. Para o retorno do evento, haverá tolerância máxima de 60 (sessenta) minutos após o horário final estipulado.
+É de responsabilidade exclusiva do PASSAGEIRO localizar o ônibus e o responsável pela excursão no local do evento.
+
+Parágrafo único: O não comparecimento no horário de retorno implica perda do direito ao transporte, sem qualquer reembolso ou responsabilidade da CONTRATANTE.
+
+5. DA POLÍTICA DE CANCELAMENTO, DESISTÊNCIA E REEMBOLSO
+5.1. O PASSAGEIRO declara estar ciente de que não haverá reembolso em caso de:
+- desistência voluntária;
+- não comparecimento no embarque;
+- atraso;
+- problemas pessoais;
+- desistência após confirmação da vaga.
+
+5.2. O reembolso integral somente será possível até 05 (cinco) dias corridos após a data do pagamento. Após o prazo de 05 (cinco) dias e até o limite de 07 (sete) dias corridos da data do pagamento, o CONTRATANTE terá direito a reembolso parcial correspondente a 25% (vinte e cinco por cento) do valor pago. Após o prazo de 07 (sete) dias corridos da data do pagamento, não haverá qualquer reembolso, sendo o valor integralmente retido. Somente será possível caso o PASSAGEIRO transfira ou venda sua vaga a outra pessoa, devendo comunicar previamente a CONTRATANTE e fornecer todos os dados do novo passageiro.
+
+5.3. Caso a vaga não seja repassada, o valor pago será integralmente retido, sem direito a crédito ou remarcação.
+
+5.4. Excepcionalmente, em caso de cancelamento definitivo do evento (e não adiamento), a CONTRATANTE avaliará a possibilidade de reembolso proporcional, descontadas despesas operacionais já assumidas.
+
+6. DAS RESPONSABILIDADES
+6.1. A CONTRATANTE compromete-se a realizar o transporte com segurança, obedecendo às normas de trânsito e manutenção veicular.
+
+6.2. A CONTRATANTE não se responsabiliza por:
+- objetos pessoais esquecidos no veículo;
+- condutas inadequadas do PASSAGEIRO durante o evento;
+- alterações na programação do evento;
+- ações de terceiros ou da organização do evento.
+
+6.3. É proibido ao PASSAGEIRO causar danos ao veículo. Em caso de dano, o responsável arcará integralmente com os custos.
+
+7. DO PAGAMENTO
+7.1. O valor da excursão será informado previamente e a vaga será considerada confirmada somente após o pagamento.
+
+Parágrafo único: As vagas são limitadas e preenchidas por ordem de pagamento.
+
+8. DA VIGÊNCIA E DISPOSIÇÕES FINAIS
+8.1. O presente contrato passa a vigorar a partir da confirmação do pagamento e encerra-se após o desembarque final do PASSAGEIRO.
+
+8.2. Ao efetuar o pagamento, o PASSAGEIRO declara que leu, compreendeu e concorda integralmente com Todos os termos deste contrato.
+            `.trim();
 
             const handleDownloadContract = () => {
                 const blob = new Blob([contractTxt], { type: 'text/plain' });
@@ -575,8 +645,10 @@
         function AdminDashboard({ events, appId, db, user, notify, currentPassword }) {
             const [tab, setTab] = useState('events'); 
             const [newEvent, setNewEvent] = useState({ title: '', departureDate: '', departureTime: '', returnDate: '', returnTime: '', price: '', eventCity: '', attendedCities: '', driverPassword: '', imageUrl: '' });
+            const [editingId, setEditingId] = useState(null);
             const [passengers, setPassengers] = useState([]);
             const [selectedId, setSelectedId] = useState(null);
+            const [passForm, setPassForm] = useState({ current: '', next: '', confirm: '' });
 
             useEffect(() => {
                 if (!selectedId) return;
@@ -585,14 +657,36 @@
                 });
             }, [selectedId]);
 
+            // Função para manipular o upload de arquivo sem limite de tamanho
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setNewEvent({ ...newEvent, imageUrl: reader.result });
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleEditEvent = (event) => {
+                setNewEvent(event);
+                setEditingId(event.id);
+                setTab('create');
+            };
+
             const handleSave = async () => {
                 if(!newEvent.title) return notify("Título obrigatório", "error");
                 try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'events'), {...newEvent, createdAt: serverTimestamp()});
-                    notify("Trip Criada!", "success");
+                    if (editingId) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', editingId), { ...newEvent, updatedAt: serverTimestamp() });
+                        notify("Trip Atualizada!", "success");
+                    } else {
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'events'), {...newEvent, createdAt: serverTimestamp()});
+                        notify("Trip Criada!", "success");
+                    }
                     setNewEvent({ title: '', departureDate: '', departureTime: '', returnDate: '', returnTime: '', price: '', eventCity: '', attendedCities: '', driverPassword: '', imageUrl: '' });
+                    setEditingId(null);
                     setTab('events');
-                } catch(e) { notify("Erro.", "error"); }
+                } catch(e) { notify("Erro ao salvar.", "error"); }
             };
 
             const handleDelete = async (id) => {
@@ -608,19 +702,34 @@
                 if(confirm("Remover passageiro?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'passengers', pid));
             }
 
+            const handleChangePassword = async () => {
+                if (passForm.current !== currentPassword) return notify("Senha atual incorreta.", "error");
+                if (passForm.next !== passForm.confirm) return notify("As senhas não coincidem.", "error");
+                if (passForm.next.length < 4) return notify("Senha muito curta.", "error");
+
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'admin'), { password: passForm.next }, { merge: true });
+                    notify("Senha alterada com sucesso!", "success");
+                    setPassForm({ current: '', next: '', confirm: '' });
+                } catch (err) {
+                    notify("Erro ao salvar senha.", "error");
+                }
+            };
+
             return (
                 <div className="grid md:grid-cols-4 gap-8">
                     <div className="glass-panel p-6 rounded-3xl h-fit">
                         <h3 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Menu</h3>
                         <nav className="space-y-2">
-                            <button onClick={() => {setTab('events'); setSelectedId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='events' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Gerenciar Trips</button>
-                            <button onClick={() => {setTab('create'); setSelectedId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='create' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Criar Nova Trip</button>
+                            <button onClick={() => {setTab('events'); setSelectedId(null); setEditingId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='events' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Gerenciar Trips</button>
+                            <button onClick={() => {setTab('create'); setSelectedId(null); setNewEvent({ title: '', departureDate: '', departureTime: '', returnDate: '', returnTime: '', price: '', eventCity: '', attendedCities: '', driverPassword: '', imageUrl: '' }); setEditingId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='create' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Criar/Editar Trip</button>
+                            <button onClick={() => {setTab('settings'); setSelectedId(null)}} className={`w-full text-left p-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all ${tab==='settings' ? 'bg-red-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>Configurações</button>
                         </nav>
                     </div>
                     <div className="md:col-span-3 glass-panel p-8 rounded-3xl min-h-[500px]">
                         {tab === 'create' && (
                             <div className="space-y-6 animate-enter">
-                                <h2 className="text-2xl font-black text-white uppercase italic mb-6">Cadastrar Nova Trip</h2>
+                                <h2 className="text-2xl font-black text-white uppercase italic mb-6">{editingId ? 'Editar Trip' : 'Cadastrar Nova Trip'}</h2>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="md:col-span-2"><AdminInput label="Nome do Evento" value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})}/></div>
                                     <AdminInput label="Cidade Destino" value={newEvent.eventCity} onChange={e => setNewEvent({...newEvent, eventCity: e.target.value})}/>
@@ -631,9 +740,13 @@
                                     <div className="md:col-span-2 bg-red-900/10 p-4 rounded-xl border border-red-500/20">
                                         <AdminInput label="Senha para Motorista" value={newEvent.driverPassword} onChange={e => setNewEvent({...newEvent, driverPassword: e.target.value})}/>
                                     </div>
-                                    <div className="md:col-span-2"><AdminInput label="URL da Imagem (Capa)" placeholder="https://..." value={newEvent.imageUrl} onChange={e => setNewEvent({...newEvent, imageUrl: e.target.value})}/></div>
+                                    <div className="md:col-span-2">
+                                        <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1 block">Imagem de Capa (Upload)</label>
+                                        <input type="file" onChange={handleFileChange} className="w-full bg-neutral-900/80 p-3 rounded-xl text-white text-xs"/>
+                                        {newEvent.imageUrl && <img src={newEvent.imageUrl} className="mt-4 h-32 rounded-xl object-cover border border-white/10"/>}
+                                    </div>
                                 </div>
-                                <button onClick={handleSave} className="bg-white text-black px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 mt-4 w-full md:w-auto">Publicar Viagem</button>
+                                <button onClick={handleSave} className="bg-white text-black px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 mt-4 w-full md:w-auto">{editingId ? 'Salvar Alterações' : 'Publicar Viagem'}</button>
                             </div>
                         )}
 
@@ -650,12 +763,25 @@
                                             </div>
                                         </div>
                                         <div className="flex gap-2 w-full md:w-auto">
-                                            <button onClick={() => setSelectedId(e.id)} className="flex-1 md:flex-none bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 shadow-lg">Ver Lista</button>
+                                            <button onClick={() => setSelectedId(e.id)} className="flex-1 md:flex-none bg-white text-black px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 shadow-lg">Lista</button>
+                                            <button onClick={() => handleEditEvent(e)} className="bg-neutral-800 text-neutral-400 px-4 py-3 rounded-xl hover:text-white transition"><Edit size={18}/></button>
                                             <button onClick={() => handleDelete(e.id)} className="bg-neutral-800 text-neutral-400 px-4 py-3 rounded-xl hover:text-red-500 hover:bg-red-500/10 transition"><Trash2 size={18}/></button>
                                         </div>
                                     </div>
                                 ))}
                                 {events.length === 0 && <p className="text-neutral-500 italic">Nenhuma viagem cadastrada.</p>}
+                            </div>
+                        )}
+
+                        {tab === 'settings' && (
+                            <div className="animate-enter max-w-md">
+                                <h2 className="text-2xl font-black text-white uppercase italic mb-6">Segurança</h2>
+                                <div className="space-y-4">
+                                    <AdminInput label="Senha Atual" type="password" value={passForm.current} onChange={e => setPassForm({...passForm, current: e.target.value})} />
+                                    <AdminInput label="Nova Senha" type="password" value={passForm.next} onChange={e => setPassForm({...passForm, next: e.target.value})} />
+                                    <AdminInput label="Confirmar Nova Senha" type="password" value={passForm.confirm} onChange={e => setPassForm({...passForm, confirm: e.target.value})} />
+                                    <button onClick={handleChangePassword} className="bg-red-600 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-red-700 w-full">Atualizar Senha</button>
+                                </div>
                             </div>
                         )}
 
@@ -694,18 +820,68 @@
             );
         }
 
-        // --- PAINEL E FLUXO DO MOTORISTA (COM CONTRATO) ---
+        // --- PAINEL E FLUXO DO MOTORISTA (COM CONTRATO COMPLETO) ---
 
         function DriverFlow({ event, appId, db, user, notify }) {
             const [step, setStep] = useState('form');
-            const [contractData, setContractData] = useState({ company: '', drivers: '', plate: '', cnpj: '' });
+            const [contractData, setContractData] = useState({ company: '', drivers: '', plate: '', cnpj: '', city: '', address: '', routeDetails: '', paymentTotal: '', paymentDate: '', contractEnd: '' });
             const [list, setList] = useState([]);
 
             // Carrega passageiros
             useEffect(() => onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'passengers'), where('eventId', '==', event.id)), s => setList(s.docs.map(d=>d.data()))), [event]);
 
-            // CONTRATO DA TRANSPORTADORA
-            const driverContractTxt = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE TRANSPORTE FRETADO\n\nCONTRATANTE: FOLLOW TRIP.\nCONTRATADA: ${contractData.company.toUpperCase()} (${contractData.cnpj}).\n\nOBJETO: Transporte fretado para ${event.title.toUpperCase()}.\nMOTORISTAS RESPONSÁVEIS: ${contractData.drivers}.\nVEÍCULO PLACA: ${contractData.plate}.\n\nCLÁUSULAS:\n1. A CONTRATADA compromete-se a realizar o transporte com veículo em perfeitas condições de segurança e higiene.\n2. O motorista deve conferir a lista de passageiros e exigir documento original com foto.\n3. A FOLLOW TRIP não se responsabiliza por multas de trânsito ou problemas mecânicos do veículo contratado.\n\nAssinado digitalmente por ${contractData.company}.`;
+            // --- CONTRATO COMPLETO DA TRANSPORTADORA ---
+            const driverContractTxt = `
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE TRANSPORTE FRETAMENTO INDIVIDUAL:
+
+CONTRATANTE (ORGANIZADOR): FOLLOW TRIP representada por Izaias Galom dos Santos Junior, pessoa física, inscrito no CPF 096.668.669-19 e no RG 6.672-002 SSP/SC, residente no endereço Tusnelda Bachmann 373, no CEP 89040320 no bairro Velha Central na cidade de Blumenau SC.
+
+CONTRATADA (EMPRESA): RAZÃO SOCIAL: ${contractData.company.toUpperCase()}, pessoa jurídica inscrita no CNPJ ${contractData.cnpj}, com empresa residente no endereço ${contractData.address}.
+
+CLÁUSULA 1 – DO OBJETO
+1.1. O presente contrato tem por objeto a prestação de serviço de transporte fretamento individual, com saída da cidade de ${contractData.city} e destino à cidade de ${event.eventCity}, a ocorrer na data ${masks.date(event.departureDate)}, com horário previsto de embarque às ${event.departureTime} horas.
+
+CLÁUSULA 2 – DO ITINERÁRIO
+Origem: ${contractData.city}
+Destino: ${event.eventCity}
+Detalhes da Rota: ${contractData.routeDetails}
+
+CLÁUSULA 3 – DO VALOR E PAGAMENTO
+3.1. O valor do serviço será informado previamente ao CONTRATANTE no ato da contratação.
+3.2. A reserva do fretado será considerada confirmada após a compensação do pagamento de sinal acordado entre ambas as partes .
+
+CLÁUSULA 4 – DA POLÍTICA DE CANCELAMENTO E REEMBOLSO
+4.1. Em caso de impossibilidade de realização da viagem por parte da CONTRATADA, esta deverá ressarcir integralmente os valores pagos ou providenciar, sob sua responsabilidade e custo, outra empresa de mesma categoria para realizar o serviço.
+4.2. O reembolso integral somente será possível até 05 (cinco) dias corridos após a data do pagamento TOTAL da viagem.
+4.3. Após o prazo de 05 (cinco) dias e até o limite de 07 (sete) dias corridos da data do pagamento TOTAL, o CONTRATANTE terá direito a reembolso parcial correspondente a 70% (setenta por cento) do valor pago.
+4.4. Após o prazo de 07 (sete) dias corridos da data do pagamento TOTAL, não haverá qualquer reembolso, sendo o valor integralmente retido.
+4.6. Em caso de cancelamento definitivo do evento (e não adiamento) por motivos de força maior, será avaliada a possibilidade de reembolso conforme as condições operacionais da CONTRATADA.
+
+CLÁUSULA 5 – DAS RESPONSABILIDADES
+5.1. A CONTRATADA compromete-se a realizar o transporte com segurança, respeitando as normas de trânsito e mantendo o veículo em condições adequadas de uso.
+5.2. O CONTRATANTE é responsável por comparecer no local e horário informados, portando documento oficial com foto.
+5.3. A CONTRATADA não se responsabiliza por objetos pessoais esquecidos ou extraviados no interior do veículo.
+
+CLÁUSULA 6 – DA TOLERÂNCIA PARA EMBARQUE (IDA)
+6.1. Será concedida tolerância máxima de 10 (dez) minutos após o horário previsto para embarque.
+6.2. Após esse período, o transporte seguirá viagem sem qualquer obrigação de aguardar ou reembolsar o passageiro ausente.
+
+CLÁUSULA 7 – DA TOLERÂNCIA PARA EMBARQUE (RETORNO)
+7.1. Será concedida tolerância máxima de 60 (sessenta) minutos após o horário oficial de encerramento do evento.
+7.2. É de total responsabilidade do CONTRATANTE localizar o ônibus e/ou o guia da excursão para realizar o embarque de retorno.
+7.3. Após o período de tolerância, o transporte seguirá viagem sem qualquer obrigação de aguardar ou reembolsar o passageiro ausente.
+
+CLAÚSULA 8 - DO PAGAMENTO
+8.1. Pela prestação do serviço, o CONTRATANTE pagará à CONTRATADA a importância total de ${contractData.paymentTotal || 'R$ 0,00'}, conforme cronograma acordado entre ambas as partes.
+8.2. A rescisão poderá ocorrer por ambas as partes mediante aviso prévio por escrito com antecedência mínima de 15 dias.
+8.3. O presente contrato tem a finalização completa do serviço de transporte ao desembarque dos passageiros conforme data de ${masks.date(contractData.contractEnd)}.
+
+CLÁUSULA 9 – DAS DISPOSIÇÕES FINAIS
+9.1. O presente contrato passa a valer a partir da confirmação do pagamento do sinal/total.
+9.2. Ao contratar o serviço, o CONTRATANTE declara ter lido, compreendido e aceito integralmente todos os termos deste contrato.
+
+Assinado digitalmente por ${contractData.company} e Follow Trip.
+            `.trim();
 
             const handleDownloadDriverContract = () => {
                 const blob = new Blob([driverContractTxt], { type: 'text/plain' });
@@ -734,7 +910,7 @@
                                 <h3 className="text-xl font-black text-white uppercase mb-2">Lista de Passageiros</h3>
                                 <p className="text-neutral-500 text-xs mb-6 max-w-xs">Lista completa com RG e Órgão Emissor para conferência no embarque e fiscalização.</p>
                                 <button onClick={() => exportToCSV(list, event.title)} className="bg-white text-black px-8 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 w-full max-w-xs mb-4">Baixar Lista (ANTT)</button>
-                                <button onClick={handleDownloadDriverContract} className="text-neutral-400 hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"><Download size={12}/> Baixar Contrato</button>
+                                <button onClick={handleDownloadDriverContract} className="text-neutral-400 hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"><Download size={12}/> Baixar Contrato Assinado</button>
                             </div>
                             <div className="bg-neutral-900/50 p-8 rounded-3xl border border-white/5 flex flex-col justify-center">
                                 <h3 className="text-sm font-black text-neutral-400 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Dados da Viagem</h3>
@@ -750,20 +926,25 @@
             }
 
             return (
-                <div className="max-w-2xl mx-auto glass-panel p-10 rounded-3xl animate-enter">
+                <div className="max-w-3xl mx-auto glass-panel p-10 rounded-3xl animate-enter">
                     <h2 className="text-2xl font-black text-white uppercase italic mb-6">Contrato de Prestação de Serviço</h2>
                     <p className="text-neutral-400 text-xs mb-8">Preencha os dados da transportadora para liberar o painel e gerar o contrato.</p>
-                    <div className="space-y-4">
-                        <AdminInput label="Razão Social" value={contractData.company} onChange={e => setContractData({...contractData, company: e.target.value})} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2"><AdminInput label="Razão Social" value={contractData.company} onChange={e => setContractData({...contractData, company: e.target.value})} /></div>
                         <AdminInput label="CNPJ" mask="cnpj" value={contractData.cnpj} onChange={e => setContractData({...contractData, cnpj: e.target.value})} />
-                        <AdminInput label="Nome dos Motoristas" value={contractData.drivers} onChange={e => setContractData({...contractData, drivers: e.target.value})} />
+                        <AdminInput label="Cidade Sede" value={contractData.city} onChange={e => setContractData({...contractData, city: e.target.value})} />
+                        <div className="md:col-span-2"><AdminInput label="Endereço Completo" value={contractData.address} onChange={e => setContractData({...contractData, address: e.target.value})} /></div>
+                        <div className="md:col-span-2"><AdminInput label="Nome dos Motoristas" value={contractData.drivers} onChange={e => setContractData({...contractData, drivers: e.target.value})} /></div>
                         <AdminInput label="Placa do Veículo" value={contractData.plate} onChange={e => setContractData({...contractData, plate: e.target.value})} />
-                        <button onClick={() => {
-                            if(!contractData.company || !contractData.cnpj) return notify("Preencha todos os dados.", "error");
-                            notify("Contrato Gerado.", "success");
-                            setStep('dashboard');
-                        }} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 mt-4 shadow-lg">Gerar Contrato e Acessar</button>
+                        <AdminInput label="Valor Total (R$)" value={contractData.paymentTotal} onChange={e => setContractData({...contractData, paymentTotal: e.target.value})} />
+                        <div className="md:col-span-2"><AdminInput label="Detalhes da Rota" value={contractData.routeDetails} onChange={e => setContractData({...contractData, routeDetails: e.target.value})} /></div>
+                        <AdminInput label="Fim Contrato" type="date" value={contractData.contractEnd} onChange={e => setContractData({...contractData, contractEnd: e.target.value})} />
                     </div>
+                    <button onClick={() => {
+                        if(!contractData.company || !contractData.cnpj) return notify("Preencha todos os dados.", "error");
+                        notify("Contrato Gerado.", "success");
+                        setStep('dashboard');
+                    }} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-neutral-200 mt-8 shadow-lg">Gerar Contrato e Acessar</button>
                 </div>
             );
         }
