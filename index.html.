@@ -93,14 +93,14 @@
         // CONFIGURAÇÃO DO FIREBASE
         // =========================================================================
         
-        const productionConfig = {
-  apiKey: "AIzaSyC1BsPhcdDdcglRLBdiC9Z5yJmrzlwWEHo",
-  authDomain: "follow-1456c.firebaseapp.com",
-  projectId: "follow-1456c",
-  storageBucket: "follow-1456c.firebasestorage.app",
-  messagingSenderId: "920351944486",
-  appId: "1:920351944486:web:6716ffe5ea63f871d21be7"
-        };
+       const firebaseConfig = {
+  apiKey: "AIzaSyB...",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.firebasestorage.app",
+  messagingSenderId: "...",
+  appId: "..."
+};
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
