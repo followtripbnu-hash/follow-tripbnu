@@ -94,13 +94,12 @@
         // =========================================================================
         
         const productionConfig = {
-            apiKey: "AIzaSyC39OUcP5pMKUUzkkaWvQEHhaQl-AH84pc",
-            authDomain: "followsite-5e0ba.firebaseapp.com",
-            projectId: "followsite-5e0ba",
-            storageBucket: "followsite-5e0ba.firebasestorage.app",
-            messagingSenderId: "171432925082",
-            appId: "1:171432925082:web:1ccb4a01b9851c5afd8c23",
-            measurementId: "G-K0VPC2XLMS"
+  apiKey: "AIzaSyC1BsPhcdDdcglRLBdiC9Z5yJmrzlwWEHo",
+  authDomain: "follow-1456c.firebaseapp.com",
+  projectId: "follow-1456c",
+  storageBucket: "follow-1456c.firebasestorage.app",
+  messagingSenderId: "920351944486",
+  appId: "1:920351944486:web:6716ffe5ea63f871d21be7"
         };
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
