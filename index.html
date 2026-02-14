@@ -88,36 +88,39 @@
             Timestamp, serverTimestamp, onSnapshot, setDoc, getDoc
         } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-
-        // =========================================================================
-        // CONFIGURAÇÃO DO FIREBASE
-        // =========================================================================
         
-const firebaseConfig = {
-  apiKey: "AIzaSyC39OUcP5pMKUUzkkaWvQEHhaQl-AH84pc",
-  authDomain: "follow-1456c.firebaseapp.com",
-  projectId: "follow-1456c",
-  storageBucket: "follow-1456c.firebasestorage.app",
-  messagingSenderId: "920351944486",
-  appId: "1:920351944486:web:6716ffe5ea63f871d21be7"
+// =========================================================================
+// CONFIGURAÇÃO DO FIREBASE
+// =========================================================================
+
+// 1. Cole aqui os dados reais do seu Console do Firebase (Project Settings > General)
+const prodConfig = {
+  apiKey: "SUA_API_KEY_REAL_AQUI", // Ex: AIzaSy...",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.firebasestorage.app",
+  messagingSenderId: "123456...",
+  appId: "1:123456..."
 };
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : productionConfig;
-            
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'follow-trip-prod';
+// Lógica para detectar se já existe config injetada ou usar a manual
+const firebaseConfig = typeof __firebase_config !== 'undefined' 
+    ? JSON.parse(__firebase_config) 
+    : prodConfig;
 
-        let app, auth, db;
-        try {
-            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-            } else {
-                console.warn("⚠️ Firebase não configurado. O app funcionará apenas visualmente (sem salvar dados).");
-            }
-        } catch (e) { console.error("Erro Firebase:", e); }
+const appId = 'follow-trip-prod'; // Identificador único da aplicação
+
+let app, auth, db;
+try {
+    // Inicializa apenas se tiver a API Key preenchida
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "SUA_API_KEY_REAL_AQUI") {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+    } else {
+        console.warn("⚠️ Firebase não configurado. Preencha a const prodConfig.");
+    }
+} catch (e) { console.error("Erro Firebase:", e); }
 
         // =========================================================================
         // UTILITÁRIOS
@@ -954,6 +957,7 @@ Assinado digitalmente por ${contractData.company} e Follow Trip.
     </script>
 </body>
 </html>
+
 
 
 
